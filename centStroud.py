@@ -17,7 +17,7 @@ from pathlib import Path
 import sys
 import argparse
 import numpy as np
-
+from sklearn.neighbors import LocalOutlierFactor
 
 
 def parseArguments():
