@@ -115,7 +115,13 @@ def main():
     updated_baseline = addStrangeness(baseline, parms.k)
 
     if len(parms.pvalueFile) > 0:
-        StrOUD(t_signals_fft, updated_baseline)
+        pvals = StrOUD(t_signals_fft, updated_baseline)
+        filename = parms.pvalueFile + ".txt"
+        f = open(filename, 'w')
+        for p in pvals:
+            f.write(str(p))
+            f.write("\n")
+        f.close()
         
 
 if __name__ == '__main__':
