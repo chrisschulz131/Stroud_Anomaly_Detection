@@ -31,14 +31,11 @@ def parseArguments():
     parser.add_argument('--pvalueFile', action='store',
                         dest='pvalueFile', default="", required=False,
                         help='file where the test data pvalues are written')
-    '''
-    Code for parsing K if this is how you choose to tune.
     
     parser.add_argument('--k', action='store',
                         dest='k', default="", type=int, required=True,
                         help='K value for LOF calculations')
-    '''
-
+    
     return parser.parse_args()
 
 
