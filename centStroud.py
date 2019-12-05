@@ -55,7 +55,7 @@ def parse_signals(base_path):
     return np.asanyarray(signals)
 
 def addStrangeness(baseline):
-    # create distrobution using LOF
+    # TODO create distrobution using LOF
 
 
 def main():
@@ -91,9 +91,9 @@ def main():
 
     t_signals_fft = rfft(t_signals)
 
-    # TODO Create the baseline from the FFT arrays
+    # Create the baseline from the FFT arrays
     baseline = np.concatenate(a_signals_fft, b_signals_fft, c_signals_fft, d_signals_fft)
-    # TODO Update the basline to with strangness from LOF
+    # Update the basline to with strangness from LOF
     updated_baseline = addStrangeness(baseline)
 
     if len(parms.pvalueFile) > 0:
