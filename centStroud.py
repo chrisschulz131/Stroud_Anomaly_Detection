@@ -18,6 +18,7 @@ import sys
 import argparse
 import numpy as np
 from sklearn.neighbors import LocalOutlierFactor
+from array import array
 
 
 def parseArguments():
@@ -56,18 +57,24 @@ def parse_signals(base_path):
 
 
 def addStrangeness(baseline, k):
-    # create distrobution using LOF
+    # create distribution using LOF
     lof = LocalOutlierFactor(n_neighbors=k, novelty=True)
     lof.fit(baseline)
 
     lof_baseline = lof.negative_outlier_factor_ * -1
     lof_baseline = np.sort(lof_baseline)
-    print(lof_baseline)
+    # print(lof_baseline)
     return lof_baseline
 
-def StrOUD(t_signals_fft, baseline):
-    # TODO finish method
-    return
+def StrOUD(t_signals_fft, baseline): # TODO finish method
+    pval_array = array('i')
+    for signal in t_signals_fft:
+        #find LOF at signal
+        # find b = number of signals > given signal
+        pvalue = 0
+        pval_array.append(pvalue)
+    
+    return pval_array
 
 def main():
     parms = parseArguments()
