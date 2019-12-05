@@ -54,9 +54,15 @@ def parse_signals(base_path):
 
     return np.asanyarray(signals)
 
+
 def addStrangeness(baseline):
     # create distrobution using LOF
+    lof = LocalOutlierFactor(n_neighbors=3, novelty=True)
+    lof.fit(baseline)
 
+    lof_baseline = lof.negative_outlier_factor_ * -1
+    lof_baseline = np.sort(lof_baseline)
+    print(lof_baseline)
 
 def main():
     parms = parseArguments()
@@ -91,9 +97,11 @@ def main():
 
     t_signals_fft = rfft(t_signals)
 
-    # TODO Create the baseline from the FFT arrays
-    baseline = np.concatenate(a_signals_fft, b_signals_fft, c_signals_fft, d_signals_fft)
-    # TODO Update the basline to with strangness from LOF
+    # Create the baseline from the FFT arrays
+    baseline = np.concatenate((a_signals_fft, b_signals_fft))
+    baseline = np.concatenate((baseline, c_signals_fft, d_signals_fft))
+
+    # Update the basline to with strangness from LOF
     updated_baseline = addStrangeness(baseline)
 
     if len(parms.pvalueFile) > 0:
