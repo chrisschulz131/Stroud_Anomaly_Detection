@@ -73,15 +73,10 @@ def main():
     parms = parseArguments()
 
     a_signals = parse_signals(parms.signal_dir + '/ModeA')
-
     b_signals = parse_signals(parms.signal_dir + '/ModeB')
-
     c_signals = parse_signals(parms.signal_dir + '/ModeC')
-
     d_signals = parse_signals(parms.signal_dir + '/ModeD')
-
     m_signals = parse_signals(parms.signal_dir + '/ModeM')
-
     t_signals = parse_signals(parms.signal_dir + '/TestSignals')
 
     # Fast Fourier Transform (FFT)
@@ -89,15 +84,10 @@ def main():
     from scipy.fftpack import rfft
 
     a_signals_fft = rfft(a_signals)
-
     b_signals_fft = rfft(b_signals)
-
     c_signals_fft = rfft(c_signals)
-
     d_signals_fft = rfft(d_signals)
-
     m_signals_fft = rfft(m_signals)
-
     t_signals_fft = rfft(t_signals)
 
     # build tuning set 
@@ -114,7 +104,7 @@ def main():
     baseline = np.concatenate((a_signals_fft, b_signals_fft))
     baseline = np.concatenate((baseline, c_signals_fft, d_signals_fft))
 
-    # Update the basline to with strangness from LOF
+    # Update the basline with distribution of strangeness from LOF
     updated_baseline = addStrangeness(baseline, parms.k)
 
     if len(parms.pvalueFile) > 0:
