@@ -64,6 +64,9 @@ def addStrangeness(baseline):
     lof_baseline = np.sort(lof_baseline)
     print(lof_baseline)
 
+def StrOUD(t_signals_fft, baseline):
+    # TODO finish method
+
 def main():
     parms = parseArguments()
 
@@ -78,8 +81,6 @@ def main():
     m_signals = parse_signals(parms.signal_dir + '/ModeM')
 
     t_signals = parse_signals(parms.signal_dir + '/TestSignals')
-
-
 
     # Fast Fourier Transform (FFT)
 
@@ -97,6 +98,16 @@ def main():
 
     t_signals_fft = rfft(t_signals)
 
+    # build tuning set 
+    tuning_set_a = rfft(parse_signals(parms.signal_dir + '/ModeAFirstHalf'))
+    tuning_set_b = rfft(parse_signals(parms.signal_dir + '/ModeBFirstHalf'))
+    tuning_set_c = rfft(parse_signals(parms.signal_dir + '/ModeCFirstHalf'))
+    tuning_set_d = rfft(parse_signals(parms.signal_dir + '/ModeDFirstHalf'))
+    tuning_set_m = rfft(parse_signals(parms.signal_dir + '/ModeMFirstHalf'))
+    tuning_set = np.concatenate((tuning_set_a, tuning_set_b))
+    tuning_set = np.concatenate((tuning_set, tuning_set_c, tuning_set_d))
+    tuning_set = np.concatenate((tuning_set, tuning_set_m))
+
     # Create the baseline from the FFT arrays
     baseline = np.concatenate((a_signals_fft, b_signals_fft))
     baseline = np.concatenate((baseline, c_signals_fft, d_signals_fft))
@@ -105,7 +116,7 @@ def main():
     updated_baseline = addStrangeness(baseline)
 
     if len(parms.pvalueFile) > 0:
-        print('call your method to do the pvalues here') # TODO
+        StrOUD(t_signals_fft, baseline)
         
 
 if __name__ == '__main__':
