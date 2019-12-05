@@ -63,9 +63,11 @@ def addStrangeness(baseline, k):
     lof_baseline = lof.negative_outlier_factor_ * -1
     lof_baseline = np.sort(lof_baseline)
     print(lof_baseline)
+    return lof_baseline
 
 def StrOUD(t_signals_fft, baseline):
     # TODO finish method
+    return
 
 def main():
     parms = parseArguments()
@@ -116,7 +118,7 @@ def main():
     updated_baseline = addStrangeness(baseline, parms.k)
 
     if len(parms.pvalueFile) > 0:
-        StrOUD(t_signals_fft, baseline)
+        StrOUD(t_signals_fft, updated_baseline)
         
 
 if __name__ == '__main__':
