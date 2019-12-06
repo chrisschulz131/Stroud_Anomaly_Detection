@@ -128,7 +128,7 @@ def main():
         # compute test p-values and save to a file
         pvals = strOUD(updated_baseline, t_signals_fft, lof)
         filename = parms.pvalueFile + ".txt"
-        np.savetxt(filename, pvals, fmt="%f")
+        np.savetxt(filename, pvals, fmt="%.5f")
 
 
 if __name__ == '__main__':
