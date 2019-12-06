@@ -56,15 +56,28 @@ def parse_signals(base_path):
     return np.asanyarray(signals)
 
 def strOUD(baseline, signals, lof):
-    pvals = array('f')
+    pvals = np.zeros(len(signals))
     #find LOF at signal
     scores = lof.score_samples(signals) * -1
     # find b = number of signals > given signal then calc the pvalues
+    i = 0
     for score in scores:        
         b = np.count_nonzero(baseline > score)        
         pvalue = (b + 1) / (baseline.shape[0] + 1)
-        pvals.append(pvalue)
+        pvals[i] = pvalue
+        i += 1
     return pvals
+
+def tuningK(baseline, pos_signals, neg_signals, lof):
+    pos_pvals = strOUD(baseline, pos_signals, lof)
+    neg_pvals = strOUD(baseline, neg_signals, lof)
+    true_pos = np.count_nonzero(pos_pvals > 0.05)
+    false_pos = np.count_nonzero(neg_pvals > 0.05)
+    recall = true_pos / len(pos_pvals)
+    precision = true_pos / (true_pos + false_pos)
+
+    return (2 * precision * recall) / (precision + recall)
+
 
 def main():
     parms = parseArguments()
@@ -88,10 +101,10 @@ def main():
     t_signals_fft = rfft(t_signals)
 
     # build tuning set TODO reduce the amount removed for tuning
-    tuning_set_a = rfft(parse_signals(parms.signal_dir + '/ModeAFirstHalf'))
-    tuning_set_b = rfft(parse_signals(parms.signal_dir + '/ModeBFirstHalf'))
-    tuning_set_c = rfft(parse_signals(parms.signal_dir + '/ModeCFirstHalf'))
-    tuning_set_d = rfft(parse_signals(parms.signal_dir + '/ModeDFirstHalf'))
+    tuning_set_a = rfft(parse_signals(parms.signal_dir + '/ktuning_a'))
+    tuning_set_b = rfft(parse_signals(parms.signal_dir + '/ktuning_b'))
+    tuning_set_c = rfft(parse_signals(parms.signal_dir + '/ktuning_c'))
+    tuning_set_d = rfft(parse_signals(parms.signal_dir + '/ktuning_d'))
     tuning_set = np.concatenate((tuning_set_a, tuning_set_b))
     tuning_set = np.concatenate((tuning_set, tuning_set_c, tuning_set_d))
 
@@ -106,9 +119,12 @@ def main():
     updated_baseline = lof.negative_outlier_factor_ * -1
     updated_baseline = np.sort(updated_baseline)
 
+    f1 = tuningK(updated_baseline, tuning_set, m_signals_fft, lof)
+    print("F1 =", f1)
+
 
     if len(parms.pvalueFile) > 0:
-        pvals = strOUD(updated_baseline, tuning_set, lof)
+        pvals = strOUD(updated_baseline, t_signals_fft, lof)
         #print pvalues to a file
         filename = parms.pvalueFile + ".txt"
         f = open(filename, 'w')
