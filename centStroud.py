@@ -55,26 +55,16 @@ def parse_signals(base_path):
 
     return np.asanyarray(signals)
 
-
-def addStrangeness(baseline, k):
-    # create distribution using LOF
-    lof = LocalOutlierFactor(n_neighbors=k, novelty=True)
-    lof.fit(baseline)
-
-    lof_baseline = lof.negative_outlier_factor_ * -1
-    lof_baseline = np.sort(lof_baseline)
-    # print(lof_baseline)
-    return lof_baseline
-
-def StrOUD(t_signals_fft, baseline): # TODO finish method
-    pval_array = array('i')
-    for signal in t_signals_fft:
-        #find LOF at signal
-        # find b = number of signals > given signal
-        pvalue = 0
-        pval_array.append(pvalue)
-    
-    return pval_array
+def strOUD(baseline, signals, lof):
+    pvals = array('f')
+    #find LOF at signal
+    scores = lof.score_samples(signals) * -1
+    # find b = number of signals > given signal then calc the pvalues
+    for score in scores:        
+        b = np.count_nonzero(baseline > score)        
+        pvalue = (b + 1) / (baseline.shape[0] + 1)
+        pvals.append(pvalue)
+    return pvals
 
 def main():
     parms = parseArguments()
@@ -97,25 +87,29 @@ def main():
     m_signals_fft = rfft(m_signals)
     t_signals_fft = rfft(t_signals)
 
-    # build tuning set 
+    # build tuning set TODO reduce the amount removed for tuning
     tuning_set_a = rfft(parse_signals(parms.signal_dir + '/ModeAFirstHalf'))
     tuning_set_b = rfft(parse_signals(parms.signal_dir + '/ModeBFirstHalf'))
     tuning_set_c = rfft(parse_signals(parms.signal_dir + '/ModeCFirstHalf'))
     tuning_set_d = rfft(parse_signals(parms.signal_dir + '/ModeDFirstHalf'))
-    tuning_set_m = rfft(parse_signals(parms.signal_dir + '/ModeMFirstHalf'))
     tuning_set = np.concatenate((tuning_set_a, tuning_set_b))
     tuning_set = np.concatenate((tuning_set, tuning_set_c, tuning_set_d))
-    tuning_set = np.concatenate((tuning_set, tuning_set_m))
 
     # Create the baseline from the FFT arrays
     baseline = np.concatenate((a_signals_fft, b_signals_fft))
     baseline = np.concatenate((baseline, c_signals_fft, d_signals_fft))
 
     # Update the basline with distribution of strangeness from LOF
-    updated_baseline = addStrangeness(baseline, parms.k)
+    lof = LocalOutlierFactor(n_neighbors=parms.k, novelty=True)
+    lof.fit(baseline)
+
+    updated_baseline = lof.negative_outlier_factor_ * -1
+    updated_baseline = np.sort(updated_baseline)
+
 
     if len(parms.pvalueFile) > 0:
-        pvals = StrOUD(t_signals_fft, updated_baseline)
+        pvals = strOUD(updated_baseline, tuning_set, lof)
+        #print pvalues to a file
         filename = parms.pvalueFile + ".txt"
         f = open(filename, 'w')
         for p in pvals:
