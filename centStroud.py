@@ -32,11 +32,11 @@ def parseArguments():
     parser.add_argument('--pvalueFile', action='store',
                         dest='pvalueFile', default="", required=False,
                         help='file where the test data pvalues are written')
-    
+
     parser.add_argument('--k', action='store',
                         dest='k', default="", type=int, required=True,
                         help='K value for LOF calculations')
-    
+
     return parser.parse_args()
 
 
@@ -55,18 +55,20 @@ def parse_signals(base_path):
 
     return np.asanyarray(signals)
 
+
 def strOUD(baseline, signals, lof):
     pvals = np.zeros(len(signals))
-    #find LOF at signal
+    # find LOF at signal
     scores = lof.score_samples(signals) * -1
     # find b = number of signals > given signal then calc the pvalues
     i = 0
-    for score in scores:        
-        b = np.count_nonzero(baseline > score)        
+    for score in scores:
+        b = np.count_nonzero(baseline > score)
         pvalue = (b + 1) / (baseline.shape[0] + 1)
         pvals[i] = pvalue
         i += 1
     return pvals
+
 
 def tuningK(baseline, pos_signals, neg_signals, lof):
     pos_pvals = strOUD(baseline, pos_signals, lof)
@@ -100,39 +102,34 @@ def main():
     m_signals_fft = rfft(m_signals)
     t_signals_fft = rfft(t_signals)
 
-    # build tuning set TODO reduce the amount removed for tuning
+    # Create the baseline from the FFT arrays
+    baseline = np.concatenate((a_signals_fft, b_signals_fft))
+    baseline = np.concatenate((baseline, c_signals_fft, d_signals_fft))
+
+    # Update the basline with distribution of strangeness from LOF
+    lof = LocalOutlierFactor(
+        n_neighbors=parms.k, novelty=True, contamination='auto')
+    lof.fit(baseline)
+    updated_baseline = lof.negative_outlier_factor_ * -1
+    updated_baseline = np.sort(updated_baseline)
+
+    # build tuning set and calculate the F1 statistic
     tuning_set_a = rfft(parse_signals(parms.signal_dir + '/ktuning_a'))
     tuning_set_b = rfft(parse_signals(parms.signal_dir + '/ktuning_b'))
     tuning_set_c = rfft(parse_signals(parms.signal_dir + '/ktuning_c'))
     tuning_set_d = rfft(parse_signals(parms.signal_dir + '/ktuning_d'))
     tuning_set = np.concatenate((tuning_set_a, tuning_set_b))
     tuning_set = np.concatenate((tuning_set, tuning_set_c, tuning_set_d))
-
-    # Create the baseline from the FFT arrays
-    baseline = np.concatenate((a_signals_fft, b_signals_fft))
-    baseline = np.concatenate((baseline, c_signals_fft, d_signals_fft))
-
-    # Update the basline with distribution of strangeness from LOF
-    lof = LocalOutlierFactor(n_neighbors=parms.k, novelty=True)
-    lof.fit(baseline)
-
-    updated_baseline = lof.negative_outlier_factor_ * -1
-    updated_baseline = np.sort(updated_baseline)
-
     f1 = tuningK(updated_baseline, tuning_set, m_signals_fft, lof)
+    print("For k =", parms.k)
     print("F1 =", f1)
 
-
     if len(parms.pvalueFile) > 0:
+        # compute test p-values and save to a file
         pvals = strOUD(updated_baseline, t_signals_fft, lof)
-        #print pvalues to a file
         filename = parms.pvalueFile + ".txt"
-        f = open(filename, 'w')
-        for p in pvals:
-            f.write(str(p))
-            f.write("\n")
-        f.close()
-        
+        np.savetxt(filename, pvals, fmt="%f")
+
 
 if __name__ == '__main__':
     main()
