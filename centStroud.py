@@ -19,9 +19,8 @@ import argparse
 import numpy as np
 from sklearn.neighbors import LocalOutlierFactor
 from array import array
-from sklearn.metrics import roc_curve
+from sklearn.metrics import roc_curve, auc
 
-import scikitplot as skplt
 import matplotlib.pyplot as plt
 
 
@@ -79,40 +78,37 @@ def tuningK(baseline, pos_signals, neg_signals, lof):
     pos_pvals = strOUD(baseline, pos_signals, lof)
     neg_pvals = strOUD(baseline, neg_signals, lof)
 
+    # Calculate the F1 Score
     true_pos = np.count_nonzero(pos_pvals > 0.05)
     false_pos = np.count_nonzero(neg_pvals > 0.05)
-
-    true_pos2 = np.count_nonzero(pos_pvals > 0)
-
-    false_neg = np.count_nonzero(pos_pvals < 0.05)
     recall = true_pos / len(pos_pvals)
     precision = true_pos / (true_pos + false_pos)
-    false_pos_rate = false_pos / (false_neg + true_pos)
+    f1 = (2 * precision * recall) / (precision + recall)
+    print("F1 =", f1)
 
-    tp = []
-    # gets true positives
-    for var in pos_pvals:
-        if var > 0.05:
-            tp.append(var)
+    # Arranging the data for the ROC curve   
+    full_data = np.concatenate((pos_pvals, neg_pvals))
+    good_labels = np.full(pos_pvals.shape,1, dtype=int)
+    bad_labels = np.full(neg_pvals.shape,0, dtype=int)
+    full_labels = np.concatenate((good_labels, bad_labels))
+    fpr, tpr, threshold = roc_curve(full_labels, full_data)
+    calc_auc = auc(fpr, tpr)
+    print("Calculated AUC =", calc_auc)
 
-    # fpr, tpr = roc_curve()
 
-
-    plt.plot([false_pos_rate, recall], [recall, recall2])
-    # plt.plot(false_pos_rate, recall, recall2)
+    # Plotting the ROC curve
+    plt.plot(fpr, tpr, color="orange", label="ROC")
     plt.plot([0, 1], [0, 1], color='darkblue', linestyle='--')
     plt.title("ROC Curve", fontsize=14)
     plt.ylabel('TPR', fontsize=12)
     plt.xlabel('FPR', fontsize=12)
-
     plt.show()
-
-    return (2 * precision * recall) / (precision + recall)
 
 
 def main():
     parms = parseArguments()
-
+    print("For k =", parms.k)
+    
     a_signals = parse_signals(parms.signal_dir + '/ModeA')
     b_signals = parse_signals(parms.signal_dir + '/ModeB')
     c_signals = parse_signals(parms.signal_dir + '/ModeC')
@@ -149,10 +145,8 @@ def main():
     tuning_set_d = rfft(parse_signals(parms.signal_dir + '/ktuning_d'))
     tuning_set = np.concatenate((tuning_set_a, tuning_set_b))
     tuning_set = np.concatenate((tuning_set, tuning_set_c, tuning_set_d))
-    f1 = tuningK(updated_baseline, tuning_set, m_signals_fft, lof)
-    print("For k =", parms.k)
-    print("F1 =", f1)
-
+    tuningK(updated_baseline, tuning_set, m_signals_fft, lof)
+    
     if len(parms.pvalueFile) > 0:
         # compute test p-values and save to a file
         pvals = strOUD(updated_baseline, t_signals_fft, lof)
