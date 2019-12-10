@@ -19,6 +19,10 @@ import argparse
 import numpy as np
 from sklearn.neighbors import LocalOutlierFactor
 from array import array
+from sklearn.metrics import roc_curve
+
+import scikitplot as skplt
+import matplotlib.pyplot as plt
 
 
 def parseArguments():
@@ -71,12 +75,37 @@ def strOUD(baseline, signals, lof):
 
 
 def tuningK(baseline, pos_signals, neg_signals, lof):
+
     pos_pvals = strOUD(baseline, pos_signals, lof)
     neg_pvals = strOUD(baseline, neg_signals, lof)
+
     true_pos = np.count_nonzero(pos_pvals > 0.05)
     false_pos = np.count_nonzero(neg_pvals > 0.05)
+
+    true_pos2 = np.count_nonzero(pos_pvals > 0)
+
+    false_neg = np.count_nonzero(pos_pvals < 0.05)
     recall = true_pos / len(pos_pvals)
     precision = true_pos / (true_pos + false_pos)
+    false_pos_rate = false_pos / (false_neg + true_pos)
+
+    tp = []
+    # gets true positives
+    for var in pos_pvals:
+        if var > 0.05:
+            tp.append(var)
+
+    # fpr, tpr = roc_curve()
+
+
+    plt.plot([false_pos_rate, recall], [recall, recall2])
+    # plt.plot(false_pos_rate, recall, recall2)
+    plt.plot([0, 1], [0, 1], color='darkblue', linestyle='--')
+    plt.title("ROC Curve", fontsize=14)
+    plt.ylabel('TPR', fontsize=12)
+    plt.xlabel('FPR', fontsize=12)
+
+    plt.show()
 
     return (2 * precision * recall) / (precision + recall)
 
